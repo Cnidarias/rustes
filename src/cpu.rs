@@ -100,7 +100,9 @@ impl CPU {
     pub fn reset(&mut self) {
         self.register_a = 0;
         self.register_x = 0;
-        self.status = 0;
+        self.register_y = 0;
+        self.stack_pointer = STACK_RESET;
+        self.status = CpuFlags::from_bits_truncate(0b100100);
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }

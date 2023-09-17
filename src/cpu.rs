@@ -326,6 +326,11 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
+    pub fn dey(&mut self) {
+        self.register_y = self.register_y.wrapping_sub(1);
+        self.update_zero_and_negative_flags(self.register_y);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -404,6 +409,9 @@ impl CPU {
 
                 // DEX
                 0xca => self.dex(),
+
+                // DEY
+                0x88 => self.dey(),
 
                 // TAY
                 0xa8 => self.tay(),
@@ -635,5 +643,13 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0x01, 0xaa, 0xca, 0x00]);
 
         assert_eq!(cpu.register_x, 0x00);
+    }
+
+    #[test]
+    fn test_dey() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x01, 0xa8, 0x88, 0x00]);
+
+        assert_eq!(cpu.register_y, 0x00);
     }
 }

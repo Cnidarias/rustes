@@ -85,6 +85,8 @@ lazy_static! {
 
         OpCode::new(0xca, "DEX", 1, 2, AddressingMode::NoneAddressing),
 
+        OpCode::new(0x88, "DEY", 1, 2, AddressingMode::NoneAddressing),
+
         OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xb5, "LDA", 2, 4, AddressingMode::ZeroPage_X),

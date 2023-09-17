@@ -287,6 +287,20 @@ impl CPU {
         }
     }
 
+    pub fn bit(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        if value & self.register_a == 0{
+            self.status.insert(CpuFlags::ZERO);
+        } else {
+            self.status.remove(CpuFlags::ZERO);
+        }
+
+        self.status.set(CpuFlags::NEGATIV, value & 0b1000_0000 > 0);
+        self.status.set(CpuFlags::OVERFLOW, value & 0b0100_0000 > 0);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -324,6 +338,10 @@ impl CPU {
                 // ASL
                 0x07 | 0x16 | 0x0e | 0x1e => {
                     self.asl(&opcode.mode);
+                }
+
+                0x24 | 0x2c => {
+                    self.bit(&opcode.mode)
                 }
 
                 // ASL
@@ -522,5 +540,33 @@ mod test {
 
         assert_eq!(cpu.register_a, 0xfe);
         assert!(cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_bit_with_zero_result() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0xff, 0);
+        cpu.load_and_run(vec![0xa9, 0x0, 0x24, 0xff, 0x00]);
+
+        assert!(cpu.status.contains(CpuFlags::ZERO));
+    }
+
+    #[test]
+    fn test_bit_with_non_zero_result() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0xff, 0x01);
+        cpu.load_and_run(vec![0xa9, 0x01, 0x24, 0xff, 0x00]);
+
+        assert!(!cpu.status.contains(CpuFlags::ZERO));
+    }
+
+    #[test]
+    fn test_bit_with_negativ_flag_and_overflow_flag() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0xff, 0b1100_0000);
+        cpu.load_and_run(vec![0xa9, 0b1100_0000, 0x24, 0xff, 0x00]);
+
+        assert!(cpu.status.contains(CpuFlags::NEGATIV));
+        assert!(cpu.status.contains(CpuFlags::OVERFLOW));
     }
 }

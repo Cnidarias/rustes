@@ -363,6 +363,16 @@ impl CPU {
                     self.compare(&opcode.mode, self.register_a);
                 }
 
+                // CPX
+                0xe0 | 0xe4 | 0xec => {
+                    self.compare(&opcode.mode, self.register_x);
+                }
+
+                // CPY
+                0xc0 | 0xc4 | 0xcc => {
+                    self.compare(&opcode.mode, self.register_y);
+                }
+
                 // ASL
                 0x0a => self.asl_on_reg_a(),
 

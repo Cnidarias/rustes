@@ -314,6 +314,13 @@ impl CPU {
         self.update_zero_and_negative_flags(compare_with.wrapping_sub(value));
     }
 
+    pub fn dec(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr).wrapping_sub(1);
+        self.mem_write(addr, value);
+        self.update_zero_and_negative_flags(value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -371,6 +378,11 @@ impl CPU {
                 // CPY
                 0xc0 | 0xc4 | 0xcc => {
                     self.compare(&opcode.mode, self.register_y);
+                }
+
+                // DEC
+                0xc6 | 0xd6 | 0xce | 0xde => {
+                    self.dec(&opcode.mode);
                 }
 
                 // ASL
@@ -598,5 +610,14 @@ mod test {
 
         assert!(cpu.status.contains(CpuFlags::NEGATIV));
         assert!(cpu.status.contains(CpuFlags::OVERFLOW));
+    }
+
+    #[test]
+    fn test_dec_zero_page() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0x10, 0x01);
+        cpu.load_and_run(vec![0xc6, 0x10, 0x00]);
+
+        assert_eq!(cpu.mem_read(0x10), 0x00);
     }
 }

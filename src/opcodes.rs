@@ -78,6 +78,11 @@ lazy_static! {
         OpCode::new(0xc4, "CPY", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xcc, "CPY", 3, 4, AddressingMode::Absolute),
 
+        OpCode::new(0xc6, "DEC", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0xd6, "DEC", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0xce, "DEC", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0xde, "DEC", 3, 7, AddressingMode::Absolute_X),
+
         OpCode::new(0xa9, "LDA", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xa5, "LDA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xb5, "LDA", 2, 4, AddressingMode::ZeroPage_X),

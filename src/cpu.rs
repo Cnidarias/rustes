@@ -337,6 +337,13 @@ impl CPU {
         self.set_register_a(self.register_a ^ value);
     }
 
+    pub fn inc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr).wrapping_add(1);
+        self.mem_write(addr, value);
+        self.update_zero_and_negative_flags(value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -404,6 +411,11 @@ impl CPU {
                 // EOR
                 0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
                     self.eor(&opcode.mode);
+                }
+
+                // INC
+                0xe6 | 0xf6 | 0xee | 0xfe => {
+                    self.inc(&opcode.mode);
                 }
 
                 // ASL
@@ -670,5 +682,14 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0b1100_0000, 0x49, 0b1010_1010, 0x00]);
 
         assert_eq!(cpu.register_a, 0b0110_1010);
+    }
+
+    #[test]
+    fn test_inc_zero_page() {
+        let mut cpu = CPU::new();
+        cpu.mem_write(0x10, 0x01);
+        cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
+
+        assert_eq!(cpu.mem_read(0x10), 0x02);
     }
 }

@@ -278,6 +278,15 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+    pub fn branch(&mut self, condition: bool) {
+        if condition {
+            let offset = self.mem_read(self.program_counter) as i8;
+            self.program_counter = self.program_counter.wrapping_add(1);
+            let new_addr = self.program_counter.wrapping_add(offset as u16);
+            self.program_counter = new_addr;
+        }
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 

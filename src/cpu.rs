@@ -253,6 +253,31 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_y);
     }
 
+    pub fn asl_on_reg_a(&mut self) {
+        let mut value = self.register_a;
+        if value >> 7 == 1 {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+        value = value << 1;
+        self.set_register_a(value);
+    }
+
+    pub fn asl(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut value = self.mem_read(addr);
+
+        if value >> 7 == 1 {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+        value = value << 1;
+        self.mem_write(addr, value);
+        self.update_zero_and_negative_flags(value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -281,6 +306,11 @@ impl CPU {
                     self.sbc(&opcode.mode);
                 }
 
+                0x07 | 0x16 | 0x0e | 0x1e => {
+                    self.asl(&opcode.mode);
+                }
+
+                0x0a => self.asl_on_reg_a(),
                 0xa8 => self.tay(),
                 0xaa => self.tax(),
                 0xe8 => self.inx(),
@@ -437,6 +467,24 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0xff, 0xe9, 0xc4, 0x00]);
 
         assert_eq!(cpu.register_a, 0x3a);
+        assert!(cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_asl_on_register_a() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x04, 0x0a, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x08);
+        assert!(!cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_asl_on_register_a_with_result_carry_set() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0xff, 0x0a, 0x00]);
+
+        assert_eq!(cpu.register_a, 0xfe);
         assert!(cpu.status.contains(CpuFlags::CARRY));
     }
 }

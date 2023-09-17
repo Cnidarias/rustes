@@ -321,6 +321,11 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+    pub fn dex(&mut self) {
+        self.register_x = self.register_x.wrapping_sub(1);
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -396,6 +401,9 @@ impl CPU {
 
                 // BEQ
                 0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),
+
+                // DEX
+                0xca => self.dex(),
 
                 // TAY
                 0xa8 => self.tay(),
@@ -619,5 +627,13 @@ mod test {
         cpu.load_and_run(vec![0xc6, 0x10, 0x00]);
 
         assert_eq!(cpu.mem_read(0x10), 0x00);
+    }
+
+    #[test]
+    fn test_dex() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x01, 0xaa, 0xca, 0x00]);
+
+        assert_eq!(cpu.register_x, 0x00);
     }
 }

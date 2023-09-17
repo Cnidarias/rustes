@@ -331,6 +331,12 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_y);
     }
 
+    pub fn eor(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        self.set_register_a(self.register_a ^ value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -393,6 +399,11 @@ impl CPU {
                 // DEC
                 0xc6 | 0xd6 | 0xce | 0xde => {
                     self.dec(&opcode.mode);
+                }
+
+                // EOR
+                0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
+                    self.eor(&opcode.mode);
                 }
 
                 // ASL
@@ -651,5 +662,13 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0x01, 0xa8, 0x88, 0x00]);
 
         assert_eq!(cpu.register_y, 0x00);
+    }
+
+    #[test]
+    fn test_eor() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1100_0000, 0x49, 0b1010_1010, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b0110_1010);
     }
 }

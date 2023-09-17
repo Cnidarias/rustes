@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use bitflags::bitflags;
 use crate::opcodes;
+use bitflags::bitflags;
+use std::collections::HashMap;
 
 bitflags! {
     /// # Status Register (P) http://wiki.nesdev.com/w/index.php/Status_flags
@@ -27,7 +27,7 @@ bitflags! {
     }
 }
 
-const STACK: u16 = 0x0100;
+// const STACK: u16 = 0x0100;
 const STACK_RESET: u8 = 0xfd;
 pub struct CPU {
     pub stack_pointer: u8,
@@ -180,6 +180,11 @@ impl CPU {
         }
     }
 
+    pub fn set_register_a(&mut self, value: u8) {
+        self.register_a = value;
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
     pub fn add_to_register_a(&mut self, value: u8) {
         let mut sum = self.register_a as u16 + value as u16;
         if self.status.contains(CpuFlags::CARRY) {
@@ -200,6 +205,8 @@ impl CPU {
         } else {
             self.status.remove(CpuFlags::OVERFLOW);
         }
+
+        self.set_register_a(res);
     }
 
     fn sbc(&mut self, mode: &AddressingMode) {
@@ -228,8 +235,7 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
-        self.register_a = value;
-        self.update_zero_and_negative_flags(self.register_a);
+        self.set_register_a(value);
     }
 
     pub fn sta(&mut self, mode: &AddressingMode) {
@@ -256,7 +262,9 @@ impl CPU {
 
             let program_counter_state = self.program_counter;
 
-            let opcode = opcodes.get(&code).expect(&format!("OpCode 0x{:02x} is not recognized!", code));
+            let opcode = opcodes
+                .get(&code)
+                .expect(&format!("OpCode 0x{:02x} is not recognized!", code));
 
             match code {
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
@@ -265,18 +273,29 @@ impl CPU {
                 0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
                     self.sta(&opcode.mode);
                 }
+                0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
+                    self.adc(&opcode.mode);
+                }
+
+                0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
+                    self.sbc(&opcode.mode);
+                }
+
                 0xa8 => self.tay(),
                 0xaa => self.tax(),
                 0xe8 => self.inx(),
                 0xc8 => self.iny(),
                 0x00 => return,
-                _ => todo!("OpCode {} [0x{:02x}] realized but not implemented", opcode.mnemonic, opcode.code)
+                _ => todo!(
+                    "OpCode {} [0x{:02x}] realized but not implemented",
+                    opcode.mnemonic,
+                    opcode.code
+                ),
             }
 
             if program_counter_state == self.program_counter {
                 self.program_counter += (opcode.len - 1) as u16;
             }
-
         }
     }
 }
@@ -384,5 +403,40 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
 
         assert_eq!(cpu.register_x, 0xc1)
+    }
+
+    #[test]
+    fn test_adc_with_outgoing_carry() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0xff, 0x69, 0xc4, 0x00]);
+
+        assert_eq!(cpu.register_a, 0xc3);
+        assert!(cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_adc_with_incoming_carry() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0xff, 0x69, 0xc4, 0x69, 0x01, 0x00]);
+
+        assert_eq!(cpu.register_a, 0xc5);
+        assert!(!cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_sbc_without_carry() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x00, 0xe9, 0xc4, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x3b);
+        assert!(!cpu.status.contains(CpuFlags::CARRY));
+    }
+    #[test]
+    fn test_sbc_with_carry() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0xff, 0xe9, 0xc4, 0x00]);
+
+        assert_eq!(cpu.register_a, 0x3a);
+        assert!(cpu.status.contains(CpuFlags::CARRY));
     }
 }

@@ -178,6 +178,40 @@ impl CPU {
         }
     }
 
+    pub fn add_to_register_a(&mut self, value: u8) {
+        let mut sum = self.register_a as u16 + value as u16;
+        if self.status.contains(CpuFlags::CARRY) {
+            sum = sum + 1;
+        }
+
+        let carry = sum > 0xff;
+        if carry {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+
+        let res = sum as u8;
+
+        if (value ^ res) & (res ^ self.register_a) & 0x80 != 0 {
+            self.status.insert(CpuFlags::OVERFLOW);
+        } else {
+            self.status.remove(CpuFlags::OVERFLOW);
+        }
+    }
+
+    fn sbc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(&mode);
+        let value = self.mem_read(addr);
+        self.add_to_register_a(((value as i8).wrapping_neg().wrapping_sub(1)) as u8);
+    }
+
+    fn adc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        self.add_to_register_a(value);
+    }
+
     pub fn inx(&mut self) {
         self.register_x = self.register_x.wrapping_add(1);
         self.update_zero_and_negative_flags(self.register_x);

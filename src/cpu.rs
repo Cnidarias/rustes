@@ -242,6 +242,11 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
+    pub fn tay(&mut self) {
+        self.register_y = self.register_a;
+        self.update_zero_and_negative_flags(self.register_y);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -260,6 +265,7 @@ impl CPU {
                 0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
                     self.sta(&opcode.mode);
                 }
+                0xa8 => self.tay(),
                 0xaa => self.tax(),
                 0xe8 => self.inx(),
                 0xc8 => self.iny(),
@@ -330,6 +336,14 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0xd, 0xaa, 0x00]);
 
         assert_eq!(cpu.register_x, 13);
+    }
+
+    #[test]
+    fn test_0xa8_tay_move_reg_a_to_reg_y() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0xd, 0xa8, 0x00]);
+
+        assert_eq!(cpu.register_y, 13);
     }
 
     #[test]

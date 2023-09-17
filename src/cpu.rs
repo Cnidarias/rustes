@@ -418,6 +418,33 @@ impl CPU {
                     self.inc(&opcode.mode);
                 }
 
+                // JMP Absolute
+                0x4c => {
+                    self.program_counter = self.mem_read_u16(self.program_counter);
+                }
+
+                // JMP Indirect
+                0x6c => {
+                    // https://www.nesdev.org/obelisk-6502-guide/reference.html#JMP
+                    // 6502 bug mode with with page boundary:
+                    //      An original 6502 has does not correctly fetch the target address
+                    //      if the indirect vector falls on a page boundary
+                    //      (e.g. $xxFF where xx is any value from $00 to $FF).
+                    //      In this case fetches the LSB from $xxFF as expected but takes the MSB
+                    //      from $xx00.
+                    let ptr = self.mem_read_u16(self.program_counter);
+
+                    let indirect_ref = if ptr & 0x00FF == 0x00FF {
+                        let lo = self.mem_read(ptr);
+                        let hi = self.mem_read(ptr & 0xFF00);
+                        (hi as u16) << 8 | (lo as u16)
+                    } else {
+                        self.mem_read_u16(ptr)
+                    };
+
+                    self.program_counter = indirect_ref;
+                }
+
                 // ASL
                 0x0a => self.asl_on_reg_a(),
 

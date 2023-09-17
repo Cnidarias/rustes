@@ -365,8 +365,7 @@ mod test {
     #[test]
     fn test_0xc8_add_one_to_reg_y() {
         let mut cpu = CPU::new();
-        cpu.register_y = 12;
-        cpu.load_and_run(vec![0xc8, 0x00]);
+        cpu.load_and_run(vec![0xa9, 0xc, 0xa8, 0xc8, 0x00]);
 
         assert_eq!(cpu.register_y, 13);
     }
@@ -374,8 +373,7 @@ mod test {
     #[test]
     fn test_iny_overflow() {
         let mut cpu = CPU::new();
-        cpu.register_y = 0xff;
-        cpu.load_and_run(vec![0xc8, 0xc8, 0x00]);
+        cpu.load_and_run(vec![0xa9, 0xff, 0xa8, 0xc8, 0xc8, 0x00]);
 
         assert_eq!(cpu.register_y, 1)
     }

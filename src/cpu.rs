@@ -301,6 +301,19 @@ impl CPU {
         self.status.set(CpuFlags::OVERFLOW, value & 0b0100_0000 > 0);
     }
 
+    pub fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        if value <= compare_with {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+
+        self.update_zero_and_negative_flags(compare_with.wrapping_sub(value));
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -340,8 +353,14 @@ impl CPU {
                     self.asl(&opcode.mode);
                 }
 
+                // BIT
                 0x24 | 0x2c => {
                     self.bit(&opcode.mode)
+                }
+
+                // CMP
+                0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
+                    self.compare(&opcode.mode, self.register_a);
                 }
 
                 // ASL
@@ -370,6 +389,7 @@ impl CPU {
 
                 // BRK
                 0x00 => return,
+
                 _ => todo!(
                     "OpCode {} [0x{:02x}] realized but not implemented",
                     opcode.mnemonic,

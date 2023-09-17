@@ -301,29 +301,56 @@ impl CPU {
                 .expect(&format!("OpCode 0x{:02x} is not recognized!", code));
 
             match code {
+                // LDA
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
                     self.lda(&opcode.mode);
                 }
+
+                // STA
                 0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
                     self.sta(&opcode.mode);
                 }
+
+                // ADC
                 0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
                     self.adc(&opcode.mode);
                 }
 
+                // SBC
                 0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
                     self.sbc(&opcode.mode);
                 }
 
+                // ASL
                 0x07 | 0x16 | 0x0e | 0x1e => {
                     self.asl(&opcode.mode);
                 }
 
+                // ASL
                 0x0a => self.asl_on_reg_a(),
+
+                // BCC
+                0x90 => self.branch(!self.status.contains(CpuFlags::CARRY)),
+
+                // BCS
+                0xb0 => self.branch(self.status.contains(CpuFlags::CARRY)),
+
+                // BEQ
+                0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),
+
+                // TAY
                 0xa8 => self.tay(),
+
+                // TAX
                 0xaa => self.tax(),
+
+                // INX
                 0xe8 => self.inx(),
+
+                // INY
                 0xc8 => self.iny(),
+
+                // BRK
                 0x00 => return,
                 _ => todo!(
                     "OpCode {} [0x{:02x}] realized but not implemented",

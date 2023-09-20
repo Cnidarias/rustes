@@ -375,6 +375,12 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+    pub fn ora(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        self.set_register_a(self.register_a | value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -452,6 +458,11 @@ impl CPU {
                 // LSR
                 0x46 | 0x56 | 0x4e | 0x5e => {
                     self.lsr(&opcode.mode);
+                }
+
+                // ORA
+                0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
+                    self.ora(&opcode.mode);
                 }
 
                 // JMP Absolute
@@ -769,5 +780,23 @@ mod test {
 
         assert_eq!(cpu.register_a, 0b0000_0000);
         assert!(cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_ora_with_zero_result() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b0000_0000, 0x09, 0b0000_0000, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b0000_0000);
+        assert!(cpu.status.contains(CpuFlags::ZERO));
+    }
+
+    #[test]
+    fn test_ora_immediate() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x09, 0b0000_0001, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b1111_0001);
+        assert!(!cpu.status.contains(CpuFlags::ZERO));
     }
 }

@@ -136,6 +136,8 @@ lazy_static! {
 
         OpCode::new(0x68, "PLA", 1, 4, AddressingMode::NoneAddressing),
 
+        OpCode::new(0x28, "PLP", 1, 4, AddressingMode::NoneAddressing),
+
         OpCode::new(0x85, "STA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x95, "STA", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8d, "STA", 3, 4, AddressingMode::Absolute),

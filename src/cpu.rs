@@ -400,6 +400,16 @@ impl CPU {
         self.set_register_a(value)
     }
 
+    pub fn plp(&mut self) {
+        let value = self.pop_from_stack();
+        self.status.bits = value;
+        // FIXME
+        //      not sure if PLP should be removing these two flags or not?!?
+        //      https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
+        self.status.remove(CpuFlags::BREAK);
+        self.status.remove(CpuFlags::BREAK2);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -519,6 +529,9 @@ impl CPU {
 
                 // PLA
                 0x68 => self.pla(),
+
+                // PLP
+                0x28 => self.plp(),
 
                 // NOP
                 0xea => {},
@@ -850,5 +863,13 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0xa9, 0b0000_0000, 0x68, 0x00]);
 
         assert_eq!(cpu.register_a, 0b1111_0000);
+    }
+
+    #[test]
+    fn test_plp() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1111_1111, 0x48, 0x28, 0x00]);
+
+        assert_eq!(cpu.status.bits(), 0b1100_1111);
     }
 }

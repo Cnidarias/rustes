@@ -27,7 +27,7 @@ bitflags! {
     }
 }
 
-// const STACK: u16 = 0x0100;
+const STACK: u16 = 0x0100;
 const STACK_RESET: u8 = 0xfd;
 pub struct CPU {
     pub stack_pointer: u8,
@@ -381,6 +381,11 @@ impl CPU {
         self.set_register_a(self.register_a | value);
     }
 
+    pub fn push_onto_stack(&mut self, value: u8) {
+        self.mem_write(STACK as u16 + self.stack_pointer as u16, value);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -491,6 +496,9 @@ impl CPU {
 
                     self.program_counter = indirect_ref;
                 }
+
+                // PHA
+                0x48 => self.push_onto_stack(self.register_a),
 
                 // NOP
                 0xea => {},
@@ -798,5 +806,13 @@ mod test {
 
         assert_eq!(cpu.register_a, 0b1111_0001);
         assert!(!cpu.status.contains(CpuFlags::ZERO));
+    }
+
+    #[test]
+    fn test_pha() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0x00]);
+
+        assert_eq!(cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1), 0b1111_0000);
     }
 }

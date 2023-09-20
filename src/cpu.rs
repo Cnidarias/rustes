@@ -278,6 +278,31 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+    pub fn lsr_on_reg_a(&mut self) {
+        let mut value = self.register_a;
+        if value & 1 == 1 {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+        value = value >> 1;
+        self.set_register_a(value);
+    }
+
+    pub fn lsr(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut value = self.mem_read(addr);
+
+        if value & 1 == 1 {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+        value = value >> 1;
+        self.mem_write(addr, value);
+        self.update_zero_and_negative_flags(value);
+    }
+
     pub fn branch(&mut self, condition: bool) {
         if condition {
             let offset = self.mem_read(self.program_counter) as i8;
@@ -418,6 +443,11 @@ impl CPU {
                     self.inc(&opcode.mode);
                 }
 
+                // LSR
+                0x46 | 0x56 | 0x4e | 0x5e => {
+                    self.lsr(&opcode.mode);
+                }
+
                 // JMP Absolute
                 0x4c => {
                     self.program_counter = self.mem_read_u16(self.program_counter);
@@ -444,6 +474,9 @@ impl CPU {
 
                     self.program_counter = indirect_ref;
                 }
+
+                // LSA
+                0x4a => self.lsr_on_reg_a(),
 
                 // ASL
                 0x0a => self.asl_on_reg_a(),
@@ -718,5 +751,14 @@ mod test {
         cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
 
         assert_eq!(cpu.mem_read(0x10), 0x02);
+    }
+
+    #[test]
+    fn test_lsr_on_reg_a() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b0000_0001, 0x4a, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b0000_0000);
+        assert!(cpu.status.contains(CpuFlags::CARRY));
     }
 }

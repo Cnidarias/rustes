@@ -386,6 +386,10 @@ impl CPU {
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 
+    pub fn php(&mut self) {
+        self.push_onto_stack(self.status.bits() | 0b0011_0000);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -499,6 +503,9 @@ impl CPU {
 
                 // PHA
                 0x48 => self.push_onto_stack(self.register_a),
+
+                // PHP
+                0x08 => self.php(),
 
                 // NOP
                 0xea => {},
@@ -810,6 +817,14 @@ mod test {
 
     #[test]
     fn test_pha() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0x00]);
+
+        assert_eq!(cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1), 0b1111_0000);
+    }
+
+    #[test]
+    fn test_php() {
         let mut cpu = CPU::new();
         cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0x00]);
 

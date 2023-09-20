@@ -481,6 +481,9 @@ impl CPU {
                     self.program_counter = indirect_ref;
                 }
 
+                // NOP
+                0xea => {},
+
                 // LSA
                 0x4a => self.lsr_on_reg_a(),
 

@@ -442,6 +442,39 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+    pub fn ror_on_reg_a(&mut self) {
+        let mut value = self.register_a;
+        let carry = self.status.contains(CpuFlags::CARRY);
+        if value & 1 == 1 {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+        value = value >> 1;
+        if carry {
+            value = value | 0b1000_0000;
+        }
+        self.set_register_a(value);
+    }
+
+    pub fn ror(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mut value = self.mem_read(addr);
+
+        let carry = self.status.contains(CpuFlags::CARRY);
+        if value & 1 == 1 {
+            self.status.insert(CpuFlags::CARRY);
+        } else {
+            self.status.remove(CpuFlags::CARRY);
+        }
+        value = value >> 1;
+        if carry {
+            value = value | 0b1000_0000;
+        }
+        self.mem_write(addr, value);
+        self.update_zero_and_negative_flags(value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -571,6 +604,14 @@ impl CPU {
                 // ROL
                 0x26 | 0x36 | 0x2e | 0x3e => {
                     self.rol(&opcode.mode);
+                }
+
+                // ROR
+                0x6a => self.ror_on_reg_a(),
+
+                // ROR
+                0x66 | 0x76 | 0x6e | 0x7e => {
+                    self.ror(&opcode.mode);
                 }
 
                 // NOP
@@ -917,6 +958,15 @@ mod test {
     fn test_rol_on_reg_a() {
         let mut cpu = CPU::new();
         cpu.load_and_run(vec![0xa9, 0b1000_0000, 0x2a, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b0000_0000);
+        assert!(cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_ror_on_reg_a() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b0000_0001, 0x6a, 0x00]);
 
         assert_eq!(cpu.register_a, 0b0000_0000);
         assert!(cpu.status.contains(CpuFlags::CARRY));

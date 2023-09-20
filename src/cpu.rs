@@ -390,6 +390,16 @@ impl CPU {
         self.push_onto_stack(self.status.bits() | 0b0011_0000);
     }
 
+    pub fn pop_from_stack(&mut self) -> u8 {
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
+        self.mem_read(STACK as u16 + self.stack_pointer as u16)
+    }
+
+    pub fn pla(&mut self) {
+        let value = self.pop_from_stack();
+        self.set_register_a(value)
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -506,6 +516,9 @@ impl CPU {
 
                 // PHP
                 0x08 => self.php(),
+
+                // PLA
+                0x68 => self.pla(),
 
                 // NOP
                 0xea => {},
@@ -829,5 +842,13 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0x00]);
 
         assert_eq!(cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1), 0b1111_0000);
+    }
+
+    #[test]
+    fn test_pla() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0xa9, 0b0000_0000, 0x68, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b1111_0000);
     }
 }

@@ -506,6 +506,11 @@ impl CPU {
         self.mem_write(addr, self.register_y)
     }
 
+    pub fn tsx(&mut self) {
+        self.register_x = self.stack_pointer;
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -672,6 +677,9 @@ impl CPU {
                 0x84 | 0x94 | 0x8c => {
                     self.sty(&opcode.mode);
                 }
+
+                // TSX
+                0xba => self.tsx(),
 
                 // NOP
                 0xea => {},

@@ -650,6 +650,9 @@ impl CPU {
                 // SED
                 0xf8 => self.status.insert(CpuFlags::DECIMAL_MODE),
 
+                // SEI
+                0x78 => self.status.insert(CpuFlags::INTERRUPT_DISABLE),
+
                 // NOP
                 0xea => {},
 

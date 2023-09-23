@@ -644,6 +644,9 @@ impl CPU {
                     self.program_counter += 1;
                 }
 
+                // SEC
+                0x38 => self.status.insert(CpuFlags::CARRY),
+
                 // NOP
                 0xea => {},
 

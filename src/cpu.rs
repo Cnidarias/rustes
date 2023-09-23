@@ -647,6 +647,9 @@ impl CPU {
                 // SEC
                 0x38 => self.status.insert(CpuFlags::CARRY),
 
+                // SED
+                0xf8 => self.status.insert(CpuFlags::DECIMAL_MODE),
+
                 // NOP
                 0xea => {},
 

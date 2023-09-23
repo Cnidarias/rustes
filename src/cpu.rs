@@ -681,6 +681,9 @@ impl CPU {
                 // TSX
                 0xba => self.tsx(),
 
+                // TXA
+                0x8a => self.set_register_a(self.register_x),
+
                 // NOP
                 0xea => {},
 

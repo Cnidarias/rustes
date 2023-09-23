@@ -496,6 +496,11 @@ impl CPU {
         self.program_counter = self.pop_from_stack_u16();
     }
 
+    pub fn stx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_x)
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -652,6 +657,11 @@ impl CPU {
 
                 // SEI
                 0x78 => self.status.insert(CpuFlags::INTERRUPT_DISABLE),
+
+                // STX
+                0x86 | 0x96 | 0x8e => {
+                    self.stx(&opcode.mode);
+                }
 
                 // NOP
                 0xea => {},
@@ -1017,5 +1027,13 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0b0000_1111, 0x48, 0x40, 0x00]);
 
         assert_eq!(cpu.status.bits(), 0b0000_1111);
+    }
+
+    #[test]
+    fn test_stx() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b0000_1111, 0xaa, 0x86, 0x10, 0x00]);
+
+        assert_eq!(cpu.mem_read(0x10), 0b0000_1111);
     }
 }

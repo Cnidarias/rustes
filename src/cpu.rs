@@ -501,6 +501,11 @@ impl CPU {
         self.mem_write(addr, self.register_x)
     }
 
+    pub fn sty(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_y)
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -661,6 +666,11 @@ impl CPU {
                 // STX
                 0x86 | 0x96 | 0x8e => {
                     self.stx(&opcode.mode);
+                }
+
+                // STA
+                0x84 | 0x94 | 0x8c => {
+                    self.sty(&opcode.mode);
                 }
 
                 // NOP
@@ -1033,6 +1043,14 @@ mod test {
     fn test_stx() {
         let mut cpu = CPU::new();
         cpu.load_and_run(vec![0xa9, 0b0000_1111, 0xaa, 0x86, 0x10, 0x00]);
+
+        assert_eq!(cpu.mem_read(0x10), 0b0000_1111);
+    }
+
+    #[test]
+    fn test_sty() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b0000_1111, 0xa8, 0x84, 0x10, 0x00]);
 
         assert_eq!(cpu.mem_read(0x10), 0b0000_1111);
     }

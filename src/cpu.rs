@@ -475,6 +475,27 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+
+    pub fn pop_from_stack_u16(&mut self) -> u16 {
+        let lo = self.pop_from_stack() as u16;
+        let hi = self.pop_from_stack() as u16;
+        (hi << 8) | lo
+    }
+
+    pub fn push_onto_stack_u16(&mut self, value: u16) {
+        let hi = (value >> 8) as u8;
+        let lo = (value & 0xff) as u8;
+        self.push_onto_stack(hi);
+        self.push_onto_stack(lo);
+    }
+
+    pub fn rti(&mut self) {
+        self.status.bits = self.pop_from_stack();
+        self.status.remove(CpuFlags::BREAK);
+        self.status.remove(CpuFlags::BREAK2);
+        self.program_counter = self.pop_from_stack_u16();
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -613,6 +634,9 @@ impl CPU {
                 0x66 | 0x76 | 0x6e | 0x7e => {
                     self.ror(&opcode.mode);
                 }
+
+                // RTI
+                0x40 => self.rti(),
 
                 // NOP
                 0xea => {},
@@ -970,5 +994,13 @@ mod test {
 
         assert_eq!(cpu.register_a, 0b0000_0000);
         assert!(cpu.status.contains(CpuFlags::CARRY));
+    }
+
+    #[test]
+    fn test_rti() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b0000_1111, 0x48, 0x40, 0x00]);
+
+        assert_eq!(cpu.status.bits(), 0b0000_1111);
     }
 }

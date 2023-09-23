@@ -638,6 +638,12 @@ impl CPU {
                 // RTI
                 0x40 => self.rti(),
 
+                // RTS
+                0x60 => {
+                    self.program_counter = self.pop_from_stack_u16();
+                    self.program_counter += 1;
+                }
+
                 // NOP
                 0xea => {},
 

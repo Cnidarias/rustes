@@ -687,6 +687,9 @@ impl CPU {
                 // TXS
                 0x9a => self.stack_pointer = self.register_x,
 
+                // TYA
+                0x98 => self.set_register_a(self.register_y),
+
                 // NOP
                 0xea => {},
 

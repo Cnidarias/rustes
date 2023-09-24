@@ -581,6 +581,9 @@ impl CPU {
                 // BVS
                 0x70 => self.branch(self.status.contains(CpuFlags::OVERFLOW)),
 
+                // CLC
+                0x18 => self.status.remove(CpuFlags::CARRY),
+
                 // CMP
                 0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
                     self.compare(&opcode.mode, self.register_a);
@@ -1104,5 +1107,14 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0b1111_1111, 0x29, 0b0000_1111, 0x00]);
 
         assert_eq!(cpu.register_a, 0b0000_1111);
+    }
+
+    #[test]
+    fn test_clc() {
+        let mut cpu = CPU::new();
+        cpu.status.insert(CpuFlags::CARRY);
+        cpu.load_and_run(vec![0xa9, 0xff, 0x69, 0xff, 0x18, 0x00]);
+
+        assert!(!cpu.status.contains(CpuFlags::CARRY));
     }
 }

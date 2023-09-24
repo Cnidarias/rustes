@@ -563,6 +563,9 @@ impl CPU {
                     self.bit(&opcode.mode)
                 }
 
+                // BMI
+                0x30 => self.branch(self.status.contains(CpuFlags::NEGATIV)),
+
                 // BRK
                 0x00 => return,
 

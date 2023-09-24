@@ -55,7 +55,7 @@ pub enum AddressingMode {
     NoneAddressing,
 }
 
-trait Mem {
+pub trait Mem {
     fn mem_read(&self, addr: u16) -> u8;
 
     fn mem_write(&mut self, addr: u16, data: u8);
@@ -114,8 +114,8 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_u16(0xFFFC, 0x8000);
+        self.memory[0x0600..(0x0600 + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_u16(0xFFFC, 0x0600);
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {
@@ -322,7 +322,7 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
 
-        if value & self.register_a == 0{
+        if value & self.register_a == 0 {
             self.status.insert(CpuFlags::ZERO);
         } else {
             self.status.remove(CpuFlags::ZERO);
@@ -402,7 +402,7 @@ impl CPU {
 
     pub fn plp(&mut self) {
         let value = self.pop_from_stack();
-        self.status.bits = value;
+        self.status = CpuFlags::from_bits_truncate(value);
         // FIXME
         //      not sure if PLP should be removing these two flags or not?!?
         //      https://wiki.nesdev.com/w/index.php/Status_flags#The_B_flag
@@ -475,7 +475,6 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
-
     pub fn pop_from_stack_u16(&mut self) -> u16 {
         let lo = self.pop_from_stack() as u16;
         let hi = self.pop_from_stack() as u16;
@@ -490,7 +489,7 @@ impl CPU {
     }
 
     pub fn rti(&mut self) {
-        self.status.bits = self.pop_from_stack();
+        self.status = CpuFlags::from_bits_truncate(self.pop_from_stack());
         self.status.remove(CpuFlags::BREAK);
         self.status.remove(CpuFlags::BREAK2);
         self.program_counter = self.pop_from_stack_u16();
@@ -532,9 +531,18 @@ impl CPU {
     }
 
     pub fn run(&mut self) {
+        self.run_with_callback(|_| {});
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F)
+    where
+        F: FnMut(&mut CPU),
+    {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
         loop {
+            callback(self);
+
             let code = self.mem_read(self.program_counter);
             self.program_counter += 1;
 
@@ -573,9 +581,7 @@ impl CPU {
                 0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),
 
                 // BIT
-                0x24 | 0x2c => {
-                    self.bit(&opcode.mode)
-                }
+                0x24 | 0x2c => self.bit(&opcode.mode),
 
                 // BMI
                 0x30 => self.branch(self.status.contains(CpuFlags::NEGATIV)),
@@ -707,7 +713,7 @@ impl CPU {
                 }
 
                 // NOP
-                0xea => {},
+                0xea => {}
 
                 // ORA
                 0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
@@ -1072,7 +1078,10 @@ mod test {
         let mut cpu = CPU::new();
         cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0x00]);
 
-        assert_eq!(cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1), 0b1111_0000);
+        assert_eq!(
+            cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1),
+            0b1111_0000
+        );
     }
 
     #[test]
@@ -1080,7 +1089,10 @@ mod test {
         let mut cpu = CPU::new();
         cpu.load_and_run(vec![0xa9, 0b1111_0000, 0x48, 0x00]);
 
-        assert_eq!(cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1), 0b1111_0000);
+        assert_eq!(
+            cpu.mem_read(STACK as u16 + cpu.stack_pointer as u16 + 1),
+            0b1111_0000
+        );
     }
 
     #[test]

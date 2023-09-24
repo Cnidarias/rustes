@@ -7,4 +7,9 @@ edition = "2021"
 
 [dependencies]
 lazy_static = "1.4.0"
-bitflags = { version = "1.2.1", features = [] }
+bitflags = { version = "2.4.0", features = [] }
+
+sdl2 = "0.35.2"
+rand = "0.8.5"
+
+

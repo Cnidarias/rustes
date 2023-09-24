@@ -524,6 +524,13 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
+    pub fn ldy(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        self.register_y = value;
+        self.update_zero_and_negative_flags(self.register_y);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -684,6 +691,11 @@ impl CPU {
                 // LDX
                 0xa2 | 0xa6 | 0xb6 | 0xae | 0xbe => {
                     self.ldx(&opcode.mode);
+                }
+
+                // LDY
+                0xa0 | 0xa4 | 0xb4 | 0xac | 0xbc => {
+                    self.ldy(&opcode.mode);
                 }
 
                 // LSR
@@ -1152,5 +1164,13 @@ mod test {
         cpu.load_and_run(vec![0xa2, 0b0000_1111, 0x00]);
 
         assert_eq!(cpu.register_x, 0b0000_1111);
+    }
+
+    #[test]
+    fn test_ldy() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa0, 0b0000_1111, 0x00]);
+
+        assert_eq!(cpu.register_y, 0b0000_1111);
     }
 }

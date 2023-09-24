@@ -578,6 +578,9 @@ impl CPU {
                 // BVC
                 0x50 => self.branch(!self.status.contains(CpuFlags::OVERFLOW)),
 
+                // BVS
+                0x70 => self.branch(self.status.contains(CpuFlags::OVERFLOW)),
+
                 // CMP
                 0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
                     self.compare(&opcode.mode, self.register_a);

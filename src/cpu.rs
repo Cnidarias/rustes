@@ -662,6 +662,13 @@ impl CPU {
                     self.program_counter = indirect_ref;
                 }
 
+                // JSR
+                0x20 => {
+                    self.push_onto_stack_u16(self.program_counter + 2 - 1);
+                    let target_address = self.mem_read_u16(self.program_counter);
+                    self.program_counter = target_address
+                }
+
                 // LDA
                 0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
                     self.lda(&opcode.mode);

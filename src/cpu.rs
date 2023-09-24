@@ -525,35 +525,35 @@ impl CPU {
                 .expect(&format!("OpCode 0x{:02x} is not recognized!", code));
 
             match code {
-                // LDA
-                0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
-                    self.lda(&opcode.mode);
-                }
-
-                // STA
-                0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
-                    self.sta(&opcode.mode);
-                }
-
                 // ADC
                 0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
                     self.adc(&opcode.mode);
                 }
 
-                // SBC
-                0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
-                    self.sbc(&opcode.mode);
-                }
+                // ASL
+                0x0a => self.asl_on_reg_a(),
 
                 // ASL
                 0x07 | 0x16 | 0x0e | 0x1e => {
                     self.asl(&opcode.mode);
                 }
 
+                // BCC
+                0x90 => self.branch(!self.status.contains(CpuFlags::CARRY)),
+
+                // BCS
+                0xb0 => self.branch(self.status.contains(CpuFlags::CARRY)),
+
+                // BEQ
+                0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),
+
                 // BIT
                 0x24 | 0x2c => {
                     self.bit(&opcode.mode)
                 }
+
+                // BRK
+                0x00 => return,
 
                 // CMP
                 0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
@@ -575,6 +575,12 @@ impl CPU {
                     self.dec(&opcode.mode);
                 }
 
+                // DEX
+                0xca => self.dex(),
+
+                // DEY
+                0x88 => self.dey(),
+
                 // EOR
                 0x49 | 0x45 | 0x55 | 0x4d | 0x5d | 0x59 | 0x41 | 0x51 => {
                     self.eor(&opcode.mode);
@@ -585,15 +591,11 @@ impl CPU {
                     self.inc(&opcode.mode);
                 }
 
-                // LSR
-                0x46 | 0x56 | 0x4e | 0x5e => {
-                    self.lsr(&opcode.mode);
-                }
+                // INX
+                0xe8 => self.inx(),
 
-                // ORA
-                0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
-                    self.ora(&opcode.mode);
-                }
+                // INY
+                0xc8 => self.iny(),
 
                 // JMP Absolute
                 0x4c => {
@@ -620,6 +622,27 @@ impl CPU {
                     };
 
                     self.program_counter = indirect_ref;
+                }
+
+                // LDA
+                0xa9 | 0xa5 | 0xb5 | 0xad | 0xbd | 0xb9 | 0xa1 | 0xb1 => {
+                    self.lda(&opcode.mode);
+                }
+
+                // LSR
+                0x4a => self.lsr_on_reg_a(),
+
+                // LSR
+                0x46 | 0x56 | 0x4e | 0x5e => {
+                    self.lsr(&opcode.mode);
+                }
+
+                // NOP
+                0xea => {},
+
+                // ORA
+                0x09 | 0x05 | 0x15 | 0x0d | 0x1d | 0x19 | 0x01 | 0x11 => {
+                    self.ora(&opcode.mode);
                 }
 
                 // PHA
@@ -659,6 +682,11 @@ impl CPU {
                     self.program_counter += 1;
                 }
 
+                // SBC
+                0xe9 | 0xe5 | 0xf5 | 0xed | 0xfd | 0xf9 | 0xe1 | 0xf1 => {
+                    self.sbc(&opcode.mode);
+                }
+
                 // SEC
                 0x38 => self.status.insert(CpuFlags::CARRY),
 
@@ -668,15 +696,26 @@ impl CPU {
                 // SEI
                 0x78 => self.status.insert(CpuFlags::INTERRUPT_DISABLE),
 
+                // STA
+                0x85 | 0x95 | 0x8d | 0x9d | 0x99 | 0x81 | 0x91 => {
+                    self.sta(&opcode.mode);
+                }
+
                 // STX
                 0x86 | 0x96 | 0x8e => {
                     self.stx(&opcode.mode);
                 }
 
-                // STA
+                // STY
                 0x84 | 0x94 | 0x8c => {
                     self.sty(&opcode.mode);
                 }
+
+                // TAX
+                0xaa => self.tax(),
+
+                // TAY
+                0xa8 => self.tay(),
 
                 // TSX
                 0xba => self.tsx(),
@@ -689,45 +728,6 @@ impl CPU {
 
                 // TYA
                 0x98 => self.set_register_a(self.register_y),
-
-                // NOP
-                0xea => {},
-
-                // LSA
-                0x4a => self.lsr_on_reg_a(),
-
-                // ASL
-                0x0a => self.asl_on_reg_a(),
-
-                // BCC
-                0x90 => self.branch(!self.status.contains(CpuFlags::CARRY)),
-
-                // BCS
-                0xb0 => self.branch(self.status.contains(CpuFlags::CARRY)),
-
-                // BEQ
-                0xf0 => self.branch(self.status.contains(CpuFlags::ZERO)),
-
-                // DEX
-                0xca => self.dex(),
-
-                // DEY
-                0x88 => self.dey(),
-
-                // TAY
-                0xa8 => self.tay(),
-
-                // TAX
-                0xaa => self.tax(),
-
-                // INX
-                0xe8 => self.inx(),
-
-                // INY
-                0xc8 => self.iny(),
-
-                // BRK
-                0x00 => return,
 
                 _ => todo!(
                     "OpCode {} [0x{:02x}] realized but not implemented",

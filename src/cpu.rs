@@ -590,6 +590,9 @@ impl CPU {
                 // CLI
                 0x58 => self.status.remove(CpuFlags::INTERRUPT_DISABLE),
 
+                // CLV
+                0xb8 => self.status.remove(CpuFlags::OVERFLOW),
+
                 // CMP
                 0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
                     self.compare(&opcode.mode, self.register_a);

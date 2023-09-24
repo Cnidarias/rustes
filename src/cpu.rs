@@ -587,6 +587,9 @@ impl CPU {
                 // CLD
                 0xd8 => self.status.remove(CpuFlags::DECIMAL_MODE),
 
+                // CLI
+                0x58 => self.status.remove(CpuFlags::INTERRUPT_DISABLE),
+
                 // CMP
                 0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
                     self.compare(&opcode.mode, self.register_a);

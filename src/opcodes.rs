@@ -59,6 +59,8 @@ lazy_static! {
 
         OpCode::new(0x30, "BMI", 2, 2/*+1 if branch succeeds; +2 if to a new page*/ , AddressingMode::NoneAddressing),
 
+        OpCode::new(0xd0, "BNE", 2, 2/*+1 if branch succeeds; +2 if to a new page*/ , AddressingMode::NoneAddressing),
+
         OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
 
         OpCode::new(0xc9, "CMP", 2, 2, AddressingMode::Immediate),

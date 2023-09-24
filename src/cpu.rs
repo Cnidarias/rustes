@@ -511,6 +511,12 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
+    pub fn and(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        self.set_register_a(self.register_a & value);
+    }
+
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
@@ -528,6 +534,11 @@ impl CPU {
                 // ADC
                 0x69 | 0x65 | 0x75 | 0x6d | 0x7d | 0x79 | 0x61 | 0x71 => {
                     self.adc(&opcode.mode);
+                }
+
+                // AND
+                0x29 | 0x25 | 0x35 | 0x2d | 0x3d | 0x39 | 0x21 | 0x31 => {
+                    self.and(&opcode.mode);
                 }
 
                 // ASL
@@ -1070,5 +1081,13 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0b0000_1111, 0xa8, 0x84, 0x10, 0x00]);
 
         assert_eq!(cpu.mem_read(0x10), 0b0000_1111);
+    }
+
+    #[test]
+    fn test_and() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0b1111_1111, 0x29, 0b0000_1111, 0x00]);
+
+        assert_eq!(cpu.register_a, 0b0000_1111);
     }
 }

@@ -569,6 +569,9 @@ impl CPU {
                 // BNE
                 0xd0 => self.branch(!self.status.contains(CpuFlags::ZERO)),
 
+                // BPL
+                0x10 => self.branch(!self.status.contains(CpuFlags::NEGATIV)),
+
                 // BRK
                 0x00 => return,
 

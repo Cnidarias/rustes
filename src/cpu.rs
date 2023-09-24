@@ -584,6 +584,9 @@ impl CPU {
                 // CLC
                 0x18 => self.status.remove(CpuFlags::CARRY),
 
+                // CLD
+                0xd8 => self.status.remove(CpuFlags::DECIMAL_MODE),
+
                 // CMP
                 0xc9 | 0xc5 | 0xd5 | 0xcd | 0xdd | 0xd9 | 0xc1 | 0xd1 => {
                     self.compare(&opcode.mode, self.register_a);

@@ -6,6 +6,7 @@ use sdl2::EventPump;
 
 pub mod cpu;
 use crate::cpu::Mem;
+pub mod bus;
 pub mod opcodes;
 
 fn color(byte: u8) -> Color {
@@ -125,7 +126,8 @@ fn main() {
         .create_texture_target(PixelFormatEnum::RGB24, 32, 32)
         .unwrap();
 
-    let mut cpu = cpu::CPU::new();
+    let bus = bus::Bus::new();
+    let mut cpu = cpu::CPU::new(bus);
     cpu.load(game_code);
     cpu.reset();
 

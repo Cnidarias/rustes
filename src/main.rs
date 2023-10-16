@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::cartridge::Rom;
 use rand::Rng;
 use sdl2::event::Event;
@@ -8,6 +9,8 @@ use std::fs;
 
 pub mod cpu;
 use crate::cpu::Mem;
+use crate::trace::trace;
+
 pub mod bus;
 pub mod cartridge;
 pub mod opcodes;
@@ -106,7 +109,7 @@ fn main() {
         .create_texture_target(PixelFormatEnum::RGB24, 32, 32)
         .unwrap();
 
-    let bytes: Vec<u8> = fs::read("snake.nes").unwrap();
+    let bytes: Vec<u8> = fs::read("nestest.nes").unwrap();
     let rom = Rom::new(&bytes).unwrap();
 
     let bus = bus::Bus::new(rom);
@@ -117,15 +120,16 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
-        handle_user_input(cpu, &mut event_pump);
-        cpu.mem_write(0xfe, rng.gen_range(1..16));
+        println!("{}", trace(cpu));
+        // handle_user_input(cpu, &mut event_pump);
+        // cpu.mem_write(0xfe, rng.gen_range(1..16));
 
-        if read_screen_state(cpu, &mut scree_state) {
-            texture.update(None, &scree_state, 32 * 3).unwrap();
-            canvas.copy(&texture, None, None).unwrap();
-            canvas.present();
-        }
+        // if read_screen_state(cpu, &mut scree_state) {
+        //     texture.update(None, &scree_state, 32 * 3).unwrap();
+        //     canvas.copy(&texture, None, None).unwrap();
+        //     canvas.present();
+        // }
 
-        std::thread::sleep(std::time::Duration::new(0, 10_000))
+        // std::thread::sleep(std::time::Duration::new(0, 10_000))
     });
 }

@@ -1,16 +1,17 @@
-use std::fs;
+use crate::cartridge::Rom;
 use rand::Rng;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::{Color, PixelFormatEnum};
 use sdl2::EventPump;
-use crate::cartridge::Rom;
+use std::fs;
 
 pub mod cpu;
 use crate::cpu::Mem;
 pub mod bus;
-pub mod opcodes;
 pub mod cartridge;
+pub mod opcodes;
+pub mod trace;
 
 fn color(byte: u8) -> Color {
     match byte {
